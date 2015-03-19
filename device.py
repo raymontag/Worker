@@ -67,7 +67,17 @@ class iDevice(object):
 		''' raw device information as dict
 		'''
 		if (len(self.deviceDict) == 0):
-			output = subprocess.check_output(["ideviceinfo", "--xml", "--udid", self.udid])
+                        try:
+                                output = subprocess.check_output(["ideviceinfo", "--xml", "--uuid", self.udid])
+                        except subprocess.CalledProcessError as e:
+                                if e.returncode == 2:
+                                        try:
+                                                output = subprocess.check_output(["ideviceinfo", "--xml", "--uuid", self.udid])
+                                        except:
+                                                raise
+                                else:
+                                        raise
+
 			self.deviceDict = plistlib.readPlistFromString(output)
 		return self.deviceDict
 
@@ -78,7 +88,17 @@ class iDevice(object):
 		''' the devices locale setting
 		'''
 		if (self.locale_val == ""):
-			self.locale_val = subprocess.check_output(["ideviceinfo", "--udid", self.udid, "--domain", "com.apple.international", "--key", "Locale"]).strip()
+                        try:
+                                self.locale_val = subprocess.check_output(["ideviceinfo", "--udid", self.udid, "--domain", "com.apple.international", "--key", "Locale"]).strip()
+                        except subprocess.CalledProcessError as e:
+                                if e.returncode == 2:
+                                        try:
+                                                self.locale_val = subprocess.check_output(["ideviceinfo", "--uuid", self.udid, "--domain", "com.apple.international", "--key", "Locale"]).strip()
+                                        except:
+                                                raise
+                                else:
+                                        raise
+
 		return self.locale_val
 
 
@@ -97,7 +117,18 @@ class iDevice(object):
 	def free_bytes(self):
 		''' get the free space left on the device in bytes
 		'''
-		output = subprocess.check_output(["ideviceinfo", "--udid", self.udid, "--domain", "com.apple.disk_usage", "--key", "TotalDataAvailable"])
+                try:
+                        output = subprocess.check_output(["ideviceinfo", "--udid", self.udid, "--domain", "com.apple.disk_usage", "--key", "TotalDataAvailable"])
+
+                except subprocess.CalledProcessError as e:
+                        if e.returncode == 2:
+                                try:
+                                        output = subprocess.check_output(["ideviceinfo", "--uuid", self.udid, "--domain", "com.apple.disk_usage", "--key", "TotalDataAvailable"])
+                                except:
+                                        raise
+                        else:
+                                raise
+
 		free_bytes = 0
 		try:
 			free_bytes = long(output)
@@ -111,7 +142,17 @@ class iDevice(object):
 		''' get raw account info from device as dict.
 		'''
 		if (len(self.accountDict) == 0):
-			output = subprocess.check_output(["ideviceinfo", "--xml", "--udid", self.udid, "--domain", "com.apple.mobile.iTunes.store", "--key", "KnownAccounts"])
+                        try:
+                                output = subprocess.check_output(["ideviceinfo", "--xml", "--udid", self.udid, "--domain", "com.apple.mobile.iTunes.store", "--key", "KnownAccounts"])
+                        except subprocess.CalledProcessError as e:
+                                if e.returncode == 2:
+                                        try:
+                                                output = subprocess.check_output(["ideviceinfo", "--xml", "--uuid", self.udid, "--domain", "com.apple.mobile.iTunes.store", "--key", "KnownAccounts"])
+                                        except:
+                                                raise
+                                else:
+                                        raise
+
 			if len(output) > 0:
 				self.accountDict = plistlib.readPlistFromString(output)
 			else:
@@ -163,7 +204,17 @@ class iDevice(object):
 	def installed_apps(self):
 		''' list all installed apps as dict.
 		'''
-		output = subprocess.check_output(["ideviceinstaller", "--udid", self.udid, "--list-apps", "-o", "list_user", "-o", "xml"])
+                try:
+                        output = subprocess.check_output(["ideviceinstaller", "--udid", self.udid, "--list-apps", "-o", "list_user", "-o", "xml"])
+                except subprocess.CalledProcessError as e:
+                        if e.returncode == 2:
+                                try:
+                                        output = subprocess.check_output(["ideviceinstaller", "--uuid", self.udid, "--list-apps", "-o", "list_user", "-o", "xml"])
+                                except:
+                                        raise
+                        else:
+                                raise
+
 		if (len(output)==0):
 			return {}
 			
@@ -173,7 +224,17 @@ class iDevice(object):
 			plist = plistlib.readPlistFromString(output)
 		except Exception:
 			logger.warning("Failed to parse installed apps via xml output. Try to extract data via regex.")
-			output = subprocess.check_output(["ideviceinstaller", "--udid", self.udid, "--list-apps", "-o", "list_user"])
+                        try:
+                                output = subprocess.check_output(["ideviceinstaller", "--udid", self.udid, "--list-apps", "-o", "list_user", "-o"])
+                        except subprocess.CalledProcessError as e:
+                                if e.returncode == 2:
+                                        try:
+                                                output = subprocess.check_output(["ideviceinstaller", "--uuid", self.udid, "--list-apps", "-o", "list_user"])
+                                        except:
+                                                raise
+                                else:
+                                        raise
+
 			regex = re.compile("^(?P<bundleId>.*) - (?P<name>.*) (?P<version>(\d+\.*)+)$",re.MULTILINE)
 			# r = regex.search(output)
 			for i in regex.finditer(output):
@@ -216,7 +277,16 @@ class iDevice(object):
 		'''
 		result=True
 		try:
-			output = subprocess.check_output(["ideviceinstaller", "--udid", self.udid, "--install", app_archive_path])
+                        try:
+                                output = subprocess.check_output(["ideviceinstaller", "--udid", self.udid, "--install", app_archive_path])
+                        except subprocess.CalledProcessError as e:
+                                if e.returncode == 2:
+                                        try:
+                                                output = subprocess.check_output(["ideviceinstaller", "--uuid", self.udid, "--install", app_archive_path])
+                                        except:
+                                                raise
+                                else:
+                                        raise
 			logger.debug('output: %s' % output)
 			if (len(output)==0):
 				result=False
@@ -231,7 +301,17 @@ class iDevice(object):
 		'''
 		result=True
 		try:
-			output = subprocess.check_output(["ideviceinstaller", "--udid", self.udid, "--uninstall", bundleId])
+                        try:
+                                output = subprocess.check_output(["ideviceinstaller", "--udid", self.udid, "--uninstall", bundleId])
+                        except subprocess.CalledProcessError as e:
+                                if e.returncode == 2:
+                                        try:
+                                                output = subprocess.check_output(["ideviceinstaller", "--uuid", self.udid, "--uninstall", bundleId])
+                                        except:
+                                                raise
+                                else:
+                                        raise
+
 			logger.debug('output: %s' % output)
 			if (len(output)==0):
 				result=False
@@ -244,7 +324,17 @@ class iDevice(object):
 		''' archives an app to `app_archive_folder`
 			returns True or False
 		'''
-		options = ["ideviceinstaller", "--udid", self.udid, "--archive", bundleId, "-o", "copy="+app_archive_folder, "-o", "remove"]
+                try:
+                        options = subprocess.check_output(["ideviceinstaller", "--udid", self.udid, "--archive", bundleId, "-o", "copy="+app_archive_folder, "-o", "remove"])
+                except subprocess.CalledProcessError as e:
+                        if e.returncode == 2:
+                                try:
+                                        options = subprocess.check_output(["ideviceinstaller", "--uuid", self.udid, "--archive", bundleId, "-o", "copy="+app_archive_folder, "-o", "remove"])
+                                except:
+                                        raise
+                        else:
+                                raise
+
 		if app_only:
 			options.extend(["-o", "app_only"])
 		if uninstall:
