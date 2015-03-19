@@ -70,12 +70,9 @@ class iDevice(object):
                         try:
                                 output = subprocess.check_output(["ideviceinfo", "--xml", "--uuid", self.udid])
                         except subprocess.CalledProcessError as e:
-                                if e.returncode == 2:
-                                        try:
-                                                output = subprocess.check_output(["ideviceinfo", "--xml", "--uuid", self.udid])
-                                        except:
-                                                raise
-                                else:
+                                try:
+                                        output = subprocess.check_output(["ideviceinfo", "--xml", "--uuid", self.udid])
+                                except:
                                         raise
 
 			self.deviceDict = plistlib.readPlistFromString(output)
@@ -91,12 +88,9 @@ class iDevice(object):
                         try:
                                 self.locale_val = subprocess.check_output(["ideviceinfo", "--udid", self.udid, "--domain", "com.apple.international", "--key", "Locale"]).strip()
                         except subprocess.CalledProcessError as e:
-                                if e.returncode == 2:
-                                        try:
-                                                self.locale_val = subprocess.check_output(["ideviceinfo", "--uuid", self.udid, "--domain", "com.apple.international", "--key", "Locale"]).strip()
-                                        except:
-                                                raise
-                                else:
+                                try:
+                                        self.locale_val = subprocess.check_output(["ideviceinfo", "--uuid", self.udid, "--domain", "com.apple.international", "--key", "Locale"]).strip()
+                                except:
                                         raise
 
 		return self.locale_val
@@ -121,12 +115,9 @@ class iDevice(object):
                         output = subprocess.check_output(["ideviceinfo", "--udid", self.udid, "--domain", "com.apple.disk_usage", "--key", "TotalDataAvailable"])
 
                 except subprocess.CalledProcessError as e:
-                        if e.returncode == 2:
-                                try:
-                                        output = subprocess.check_output(["ideviceinfo", "--uuid", self.udid, "--domain", "com.apple.disk_usage", "--key", "TotalDataAvailable"])
-                                except:
-                                        raise
-                        else:
+                        try:
+                                output = subprocess.check_output(["ideviceinfo", "--uuid", self.udid, "--domain", "com.apple.disk_usage", "--key", "TotalDataAvailable"])
+                        except:
                                 raise
 
 		free_bytes = 0
@@ -145,12 +136,9 @@ class iDevice(object):
                         try:
                                 output = subprocess.check_output(["ideviceinfo", "--xml", "--udid", self.udid, "--domain", "com.apple.mobile.iTunes.store", "--key", "KnownAccounts"])
                         except subprocess.CalledProcessError as e:
-                                if e.returncode == 2:
-                                        try:
-                                                output = subprocess.check_output(["ideviceinfo", "--xml", "--uuid", self.udid, "--domain", "com.apple.mobile.iTunes.store", "--key", "KnownAccounts"])
-                                        except:
-                                                raise
-                                else:
+                                try:
+                                        output = subprocess.check_output(["ideviceinfo", "--xml", "--uuid", self.udid, "--domain", "com.apple.mobile.iTunes.store", "--key", "KnownAccounts"])
+                                except:
                                         raise
 
 			if len(output) > 0:
@@ -207,12 +195,9 @@ class iDevice(object):
                 try:
                         output = subprocess.check_output(["ideviceinstaller", "--udid", self.udid, "--list-apps", "-o", "list_user", "-o", "xml"])
                 except subprocess.CalledProcessError as e:
-                        if e.returncode == 2:
-                                try:
-                                        output = subprocess.check_output(["ideviceinstaller", "--uuid", self.udid, "--list-apps", "-o", "list_user", "-o", "xml"])
-                                except:
-                                        raise
-                        else:
+                        try:
+                                output = subprocess.check_output(["ideviceinstaller", "--uuid", self.udid, "--list-apps", "-o", "list_user", "-o", "xml"])
+                        except:
                                 raise
 
 		if (len(output)==0):
@@ -227,12 +212,9 @@ class iDevice(object):
                         try:
                                 output = subprocess.check_output(["ideviceinstaller", "--udid", self.udid, "--list-apps", "-o", "list_user", "-o"])
                         except subprocess.CalledProcessError as e:
-                                if e.returncode == 2:
-                                        try:
-                                                output = subprocess.check_output(["ideviceinstaller", "--uuid", self.udid, "--list-apps", "-o", "list_user"])
-                                        except:
-                                                raise
-                                else:
+                                try:
+                                        output = subprocess.check_output(["ideviceinstaller", "--uuid", self.udid, "--list-apps", "-o", "list_user"])
+                                except:
                                         raise
 
 			regex = re.compile("^(?P<bundleId>.*) - (?P<name>.*) (?P<version>(\d+\.*)+)$",re.MULTILINE)
@@ -280,12 +262,9 @@ class iDevice(object):
                         try:
                                 output = subprocess.check_output(["ideviceinstaller", "--udid", self.udid, "--install", app_archive_path])
                         except subprocess.CalledProcessError as e:
-                                if e.returncode == 2:
-                                        try:
-                                                output = subprocess.check_output(["ideviceinstaller", "--uuid", self.udid, "--install", app_archive_path])
-                                        except:
-                                                raise
-                                else:
+                                try:
+                                        output = subprocess.check_output(["ideviceinstaller", "--uuid", self.udid, "--install", app_archive_path])
+                                except:
                                         raise
 			logger.debug('output: %s' % output)
 			if (len(output)==0):
@@ -304,12 +283,9 @@ class iDevice(object):
                         try:
                                 output = subprocess.check_output(["ideviceinstaller", "--udid", self.udid, "--uninstall", bundleId])
                         except subprocess.CalledProcessError as e:
-                                if e.returncode == 2:
-                                        try:
-                                                output = subprocess.check_output(["ideviceinstaller", "--uuid", self.udid, "--uninstall", bundleId])
-                                        except:
-                                                raise
-                                else:
+                                try:
+                                        output = subprocess.check_output(["ideviceinstaller", "--uuid", self.udid, "--uninstall", bundleId])
+                                except:
                                         raise
 
 			logger.debug('output: %s' % output)
@@ -327,12 +303,9 @@ class iDevice(object):
                 try:
                         options = subprocess.check_output(["ideviceinstaller", "--udid", self.udid, "--archive", bundleId, "-o", "copy="+app_archive_folder, "-o", "remove"])
                 except subprocess.CalledProcessError as e:
-                        if e.returncode == 2:
-                                try:
-                                        options = subprocess.check_output(["ideviceinstaller", "--uuid", self.udid, "--archive", bundleId, "-o", "copy="+app_archive_folder, "-o", "remove"])
-                                except:
-                                        raise
-                        else:
+                        try:
+                                options = subprocess.check_output(["ideviceinstaller", "--uuid", self.udid, "--archive", bundleId, "-o", "copy="+app_archive_folder, "-o", "remove"])
+                        except:
                                 raise
 
 		if app_only:
