@@ -36,7 +36,6 @@ class Scheduler(object):
 	@classmethod
 	def _default_runjob(cls):
 		return {
-			'type':'run_app',
 			'state':'pending',
 			'jobInfo': {
 				'appType':'AppStoreApp'
@@ -54,7 +53,7 @@ class Scheduler(object):
 		return jobId
 
 
-	def schedule_bundleId(self, bundleId, worker=None, device=None, account=None, country=None, executionStrategy=None):
+	def schedule_bundleId(self, bundleId, job_type, worker=None, device=None, account=None, country=None, executionStrategy=None):
 		jobDict = {
 			'jobInfo': {
 				'bundleId':bundleId
@@ -70,10 +69,13 @@ class Scheduler(object):
 			jobDict['jobInfo']['storeCountry'] = country
 		if executionStrategy:
 			jobDict['jobInfo']['executionStrategy'] = executionStrategy
+
+                jobDict['type'] = job_type
+                
 		return self.schedule_job(jobDict)
 
 
-	def schedule_appId(self, appId, account=None, country=None, executionStrategy=None):
+	def schedule_appId(self, appId, job_type, account=None, country=None, executionStrategy=None):
 		url = 'http://itunes.apple.com/lookup?id=%s' % appId
 		r = requests.get(url)
 		if r.status_code != 200:
@@ -85,11 +87,11 @@ class Scheduler(object):
 		if len(results) != 1:
 			logger.error("No app with id %s found", (appId))
 			return False
-		return self.schedule_bundleId(results[0]['bundleId'], account=account, country=country, executionStrategy=None)
+		return self.schedule_bundleId(results[0]['bundleId'], job_type, account=account, country=country, executionStrategy=None)
 
 
 
-	def schedule_itunes(self, url, account=None, country=None, executionStrategy=None):
+	def schedule_itunes(self, url, job_type, account=None, country=None, executionStrategy=None):
 		logger.info('Adding apps from iTunes (%s)' % url)
 		r = requests.get(url)
 		if r.status_code != 200:
@@ -100,7 +102,7 @@ class Scheduler(object):
 		entries = resDict['feed']['entry']
 		result = True
 		for entry in entries:
-			if not self.schedule_bundleId(entry['id']['attributes']['im:bundleId'], account=account, country=country, executionStrategy=None):
+			if not self.schedule_bundleId(entry['id']['attributes']['im:bundleId'], job_type, account=account, country=country, executionStrategy=None):
 				result = False
 		return result
 
@@ -112,7 +114,7 @@ def main():
 	parser = argparse.ArgumentParser(description='schedule backend jobs from different sources.')
 	parser.add_argument('-b','--backend', required=True, help='the backend url.')
 	parser.add_argument('-a','--account', help='the accountId to use.')
-	
+	parser.add_argument('-t','--job-type', default='install_app', help='could be install_app, run_app or exec_cmd. default is install_app')
 	parser.add_argument('-s','--strategy', help='the execution strategy and duration to use.')
 	
 	# add commands
@@ -134,16 +136,22 @@ def main():
 	def printRes(res):
 		if res:
 			logger.info('done!')
+                        print(res)
 		else:
 			logger.error('error occured (could be partially done)')
 
+
+        if not args.job_type in ['install_app', 'run_app', 'exec_cmd']:
+                print('Not a valid job-type!')
+                return
+        
 	if 'bundleId' in args and args.bundleId:
-		res = scheduler.schedule_bundleId(args.bundleId, account=args.account, country=args.itunes_country, executionStrategy=args.strategy)
+		res = scheduler.schedule_bundleId(args.bundleId, args.job_type, account=args.account, country=args.itunes_country, executionStrategy=args.strategy)
 		printRes(res)
 		return
 
 	if 'appId' in args and args.appId:
-		res = scheduler.schedule_appId(args.appId, account=args.account, country=args.itunes_country, executionStrategy=args.strategy)
+		res = scheduler.schedule_appId(args.appId, args.job_type, account=args.account, country=args.itunes_country, executionStrategy=args.strategy)
 		printRes(res)
 		return
 
@@ -153,13 +161,13 @@ def main():
 
 	if 'itunes_top' in args and args.itunes_top:
 		url = 'https://itunes.apple.com/%s/rss/topfreeapplications/limit=%i/genre=%s/json' % (args.itunes_country, args.itunes_top, genre)
-		res = scheduler.schedule_itunes(url, account=args.account, country=args.itunes_country, executionStrategy=args.strategy)
+		res = scheduler.schedule_itunes(url, args.job_type, account=args.account, country=args.itunes_country, executionStrategy=args.strategy)
 		printRes(res)
 		return
 
 	if 'itunes_new' in args and args.itunes_new:
 		url = 'https://itunes.apple.com/%s/rss/newfreeapplications/limit=%i/genre=%s/json' % (args.itunes_country, args.itunes_new, genre)
-		res = scheduler.schedule_itunes(url, account=args.account, country=args.itunes_country, executionStrategy=args.strategy)
+		res = scheduler.schedule_itunes(url, args.job_type, account=args.account, country=args.itunes_country, executionStrategy=args.strategy)
 		printRes(res)
 		return
 
