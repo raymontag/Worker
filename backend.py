@@ -171,7 +171,7 @@ class Backend(object):
 			appsDict = json.loads(r.text)
 			if len(appsDict) == 1:
                                 if not 'minimumOsVersion' in appsDict:
-                                        minimumOsVersion = 0
+                                        minimumOsVersion = '0'
                                 else:
                                         minimumOsVersion = appsDict['minimumOsVersion']
 				return (appsDict.values()[0], minimumOsVersion)

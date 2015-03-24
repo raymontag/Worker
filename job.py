@@ -122,7 +122,11 @@ class InstallAppJob(Job):
 			elif self.appId:
 				# install from backend
 				
-                                if StrictVersion(minimumOsVersion) > StrictVersion(productVersion):
+                                productVersion_alt = int(''.join(productVersion.split('.')))
+                                # has to be > 99 to compare with e.g. ProductVersion 7.1.2
+                                if productVersion_alt < 100:
+                                        productVersion_alt *= 10
+                                if int(minimumOsVersion) > productVersion_alt:
                                         raise ProductVersionError(minimumOsVersion)
 
 				# dirty check for ipa-size < ~50MB
