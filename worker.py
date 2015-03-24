@@ -13,7 +13,7 @@ logger = logging.getLogger('worker')
 
 logger.setLevel(level=logging.INFO)
 
-from job import JobFactory
+from job import JobFactory, ProductVersionError
 from device import iDevice
 from backend import Backend
 #from pilot import Pilot
@@ -65,7 +65,8 @@ class DeviceLoop(Process):
 						logger.error("traceback: %s" % tb)
 						logger.error("Device loop will be stopped now.")
 						self.stop()
-						
+                                        except ProductVersionError as e:
+                                                logger.warn('Executing job aborted: Higher OS version (%s) needed, job is set to pending' % e)
 					except Exception as e:
 						logger.error("Executing job failed: %s" % e)
 						tb = traceback.format_exc()

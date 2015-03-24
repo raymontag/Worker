@@ -3,6 +3,7 @@ import os
 import logging
 import base64
 import time
+from distutils.version import StrictVersion
 
 from enum import Enum
 from store import AppStore, AppStoreException
@@ -11,6 +12,9 @@ from pilot import Pilot
 logger = logging.getLogger('worker.'+__name__)
 
 class JobExecutionError(Exception):
+	pass
+
+class ProductVersionError(Exception):
 	pass
 
 
@@ -80,6 +84,8 @@ class InstallAppJob(Job):
 		if 'version' in jobInfo:
 			version = jobInfo['version']
 
+                productVersion = self.device.device_info_dict()['ProductVersion']
+
 		#check app type
 		if 'AppStoreApp' == jobInfo['appType']:
 			logger.debug('installing appstore app %s' % bundleId)
@@ -100,7 +106,8 @@ class InstallAppJob(Job):
 				alreadyInstalled = True
 
 			# check the backend for already existing app
-			app = self.backend.get_app_bundleId(bundleId, version)
+			(app, minimumOsVersion) = self.backend.get_app_bundleId(bundleId, version)
+
 			logger.debug('backend result for bundleId %s: %s' % (bundleId, app))
 			if app and '_id' in app:
 				self.appId = app['_id']
@@ -115,6 +122,9 @@ class InstallAppJob(Job):
 			elif self.appId:
 				# install from backend
 				
+                                if StrictVersion(minimumOsVersion) > StrictVersion(productVersion):
+                                        raise ProductVersionError(minimumOsVersion)
+
 				# dirty check for ipa-size < ~50MB
 				if app and 'fileSizeBytes' in app:
 					size = 0
@@ -172,6 +182,8 @@ class InstallAppJob(Job):
 			self.jobDict['appInfo'] = appInfo
 			logger.debug('using appInfo: %s' % str(appInfo))
 
+                        if StrictVersion(appInfo['minimum-os-version']) > StrictVersion(productVersion):
+                                raise ProductVersionError(appInfo['minimum-os-version'])
 
 			## get account
 			accountId = ''
@@ -255,6 +267,19 @@ class InstallAppJob(Job):
 			logger.error("Job execution failed: %s" % str(e))
 			backendJobData['state'] = Job.STATE.FAILED
 			result = False
+                except ProductVersionError, e:
+                        logger.warn("Job execution aborted: iOS version to low")
+                        backendJobData['state'] = Job.STATE.PENDING
+                        backendJobData['worker'] = None
+                        backendJobData['device'] = None
+
+                        # has to be > 99 to compare with e.g. ProductVersion 7.1.2
+                        minimumOSVersion = int(''.join(str(e).split('.')))
+                        if minimumOSVersion < 100:
+                                minimumOSVersion *= 10
+                        backendJobData['jobInfo']['minimumOSVersion'] = str(minimumOSVersion)
+                        self.backend.post_job(backendJobData)
+                        raise
 	
 		## set job finished
 		if self.jobId:
@@ -387,6 +412,12 @@ class RunAppJob(Job):
 			backendJobData['state'] = Job.STATE.FAILED
 			self.backend.post_job(backendJobData)
 			return False
+                except ProductVersionError, e:
+                        logger.warn("Job execution aborted: iOS version to low")
+                        backendJobData['state'] = Job.STATE.PENDING
+                        backendJobData['jobInfo']['minimumOSVersion'] = ''.join(str(e).split('.'))
+                        self.backend.post_job(backendJobData)
+                        raise
 
 		## set job finished
 		backendJobData['state'] = Job.STATE.FINISHED
