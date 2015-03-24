@@ -170,7 +170,11 @@ class Backend(object):
 		if r.status_code == 200:
 			appsDict = json.loads(r.text)
 			if len(appsDict) == 1:
-				return (appsDict.values()[0], appsDict['minimumOsVersion'])
+                                if not 'minimumOsVersion' in appsDict:
+                                        minimumOsVersion = 0
+                                else:
+                                        minimumOsVersion = appsDict['minimumOsVersion']
+				return (appsDict.values()[0], minimumOsVersion)
 			logger.debug('%s returned %s results' % (url, len(appsDict)))
 		else:
 			logger.error('%s request failed: %s %s' % (url, r.status_code, r.text))
