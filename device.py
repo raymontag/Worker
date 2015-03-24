@@ -300,18 +300,15 @@ class iDevice(object):
 		''' archives an app to `app_archive_folder`
 			returns True or False
 		'''
-                try:
-                        options = subprocess.check_output(["ideviceinstaller", "--udid", self.udid, "--archive", bundleId, "-o", "copy="+app_archive_folder, "-o", "remove"])
-                except subprocess.CalledProcessError as e:
-                        try:
-                                options = subprocess.check_output(["ideviceinstaller", "--uuid", self.udid, "--archive", bundleId, "-o", "copy="+app_archive_folder, "-o", "remove"])
-                        except:
-                                raise
+                options = ["ideviceinstaller", "--udid", self.udid, "--archive", bundleId, "-o", "copy="+app_archive_folder, "-o", "remove"]
+                options_alt = ["ideviceinstaller", "--uuid", self.udid, "--archive", bundleId, "-o", "copy="+app_archive_folder, "-o", "remove"]
 
 		if app_only:
 			options.extend(["-o", "app_only"])
+			options_alt.extend(["-o", "app_only"])
 		if uninstall:
 			options.extend(["-o", "uninstall"])
+			options_alt.extend(["-o", "uninstall"])
 
 		if not os.path.exists(app_archive_folder):
 			os.makedirs(app_archive_folder)
@@ -323,7 +320,12 @@ class iDevice(object):
 			if (len(output)==0):
 				result=False
 		except subprocess.CalledProcessError as e:
-			logger.error('archiving app %s failed with: %s <output: %s>', bundleId, e, output)
-			result=False
+                        try:
+                                output = subprocess.check_output(options_alt)
+                                logger.debug('output: %s' % output)
+                                if (len(output)==0):
+                                        result=False
+                        except subprocess.CalledProcessError as e:
+                                logger.error('archiving app %s failed with: %s <output: %s>', bundleId, e, output)
+                                result=False
 		return result
-
