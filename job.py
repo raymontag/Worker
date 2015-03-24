@@ -266,6 +266,7 @@ class InstallAppJob(Job):
 		except JobExecutionError, e:
 			logger.error("Job execution failed: %s" % str(e))
 			backendJobData['state'] = Job.STATE.FAILED
+                        backendJobData['error_message'] = str(e)
 			result = False
                 except ProductVersionError, e:
                         logger.warn("Job execution aborted: iOS version to low")
@@ -410,6 +411,7 @@ class RunAppJob(Job):
 		except JobExecutionError, e:
 			logger.error("Job execution failed: %s" % str(e))
 			backendJobData['state'] = Job.STATE.FAILED
+                        backendJobData['error_message'] = str(e)
 			self.backend.post_job(backendJobData)
 			return False
                 except ProductVersionError, e:
