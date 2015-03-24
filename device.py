@@ -68,7 +68,7 @@ class iDevice(object):
 		'''
 		if (len(self.deviceDict) == 0):
                         try:
-                                output = subprocess.check_output(["ideviceinfo", "--xml", "--uuid", self.udid])
+                                output = subprocess.check_output(["ideviceinfo", "--xml", "--udid", self.udid])
                         except subprocess.CalledProcessError as e:
                                 try:
                                         output = subprocess.check_output(["ideviceinfo", "--xml", "--uuid", self.udid])
