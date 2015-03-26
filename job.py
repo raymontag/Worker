@@ -186,8 +186,19 @@ class InstallAppJob(Job):
 				trackId = store.get_trackId_for_bundleId(bundleId)
 				appInfo = store.get_app_info(trackId)
 			except AppStoreException as e:
+                                if deviceClass == 'iPad':
+                                        device_type = 0b100
+                                elif deviceClass == 'iPhone':
+                                        device_type = 0b10
+                                else:
+                                        device_type == 0b1
+
+                                self.jobDict['compatible_devices'] ^= device_type
 				logger.error('unable to get appInfo: %s ', e)
-				raise JobExecutionError('unable to get appInfo: AppStoreException')
+                                if self.jobDict['compatible_devices'] != 0:
+                                        raise
+                                else:
+                                        raise JobExecutionError('unable to get appInfo: AppStoreException')
 			
 			self.jobDict['appInfo'] = appInfo
 			logger.debug('using appInfo: %s' % str(appInfo))
@@ -290,7 +301,15 @@ class InstallAppJob(Job):
                                 minimumOSVersion *= 10
                         backendJobData['jobInfo']['minimumOSVersion'] = str(minimumOSVersion)
                         self.backend.post_job(backendJobData)
-                        raise
+                        return False
+                except AppStoreException:
+                        logger.warn("Job execution aborted: Job seems to be not compatible with device")
+                        backendJobData['state'] = Job.STATE.PENDING
+                        backendJobData['worker'] = None
+                        backendJobData['device'] = None
+                        backendJobData['compatible_devices'] = self.jobDict['compatible_devices']
+                        self.backend.post_job(backendJobData)
+                        return False
 	
 		## set job finished
 		if self.jobId:
@@ -424,12 +443,6 @@ class RunAppJob(Job):
                         backendJobData['error_message'] = str(e)
 			self.backend.post_job(backendJobData)
 			return False
-                except ProductVersionError, e:
-                        logger.warn("Job execution aborted: iOS version to low")
-                        backendJobData['state'] = Job.STATE.PENDING
-                        backendJobData['jobInfo']['minimumOSVersion'] = ''.join(str(e).split('.'))
-                        self.backend.post_job(backendJobData)
-                        raise
 
 		## set job finished
 		backendJobData['state'] = Job.STATE.FINISHED
