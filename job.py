@@ -170,10 +170,16 @@ class InstallAppJob(Job):
 			storeCountry = 'de'
 			if 'storeCountry' in jobInfo:
 				storeCountry = jobInfo['storeCountry']
+                        if 'DeviceClass' in self.device.device_info_dict():
+                                deviceClass = self.device.device_info_dict()['DeviceClass']
+                        else:
+                                deviceClass = 'iPhone'
+
+                        logger.debug('User-Agent: %s' % deviceClass)
 
 			## get appInfo
 			logger.debug('fetch appInfo from iTunesStore')
-			store = AppStore(storeCountry)
+			store = AppStore(storeCountry, deviceClass)
 			trackId = 0
 			appInfo = {}
 			try:

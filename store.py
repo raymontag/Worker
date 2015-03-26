@@ -1,6 +1,7 @@
 from bs4 import BeautifulSoup
 import urllib2
 import json
+import plistlib
 
 class AppStoreException(Exception):
 	pass
@@ -20,7 +21,15 @@ class AppStore(object):
 	def __do_request(self, url):
 		
 		request = urllib2.Request(url)
-		request.add_header('User-Agent', 'iTunes-iPhone/5.1.1 (3)')
+                if self.deviceClass == "iPhone":
+                        request.add_header('User-Agent', 'iTunes-iPhone/5.1.1 (5; 16GB)')
+                elif self.deviceClass == "iPad":
+                        request.add_header('User-Agent', 'iTunes-iPad/5.1.1 (16GB)')
+                elif self.deviceClass == "iPod":
+                        request.add_header('User-Agent', 'iTunes-iPod/5.1.1 (5; 16GB)')
+                else:
+                        raise AppStoreException("Invalid User-Agent: %s" % self.deviceClass)
+
 		response = None
 		try:
 			response = urllib2.urlopen(request, timeout=15)
@@ -32,8 +41,9 @@ class AppStore(object):
 		return response
 		
 
-	def __init__(self, country="de"):
+	def __init__(self, country="de", deviceClass="iPhone"):
 		self.country = country
+                self.deviceClass = deviceClass
 	
 	
 	def get_app_info(self, appId):
